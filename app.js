@@ -5,10 +5,40 @@ const defaultProgress = {
   drive: { best: 0 }
 };
 
+function normalizeProgress(progress) {
+  const base = JSON.parse(JSON.stringify(defaultProgress));
+  const safe = progress && typeof progress === 'object' ? progress : {};
+
+  return {
+    doge1: {
+      ...base.doge1,
+      ...(safe.doge1 || {})
+    },
+    doge2: {
+      ...base.doge2,
+      ...(safe.doge2 || {})
+    },
+    drive: {
+      ...base.drive,
+      ...(safe.drive || {})
+    }
+  };
+}
+
 const appState = {
   activeGame: 'doge1',
   currentUser: null,
-  accounts: JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}')
+  accounts: (() => {
+    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    Object.keys(stored).forEach((username) => {
+      if (!stored[username]) return;
+      stored[username] = {
+        ...stored[username],
+        progress: normalizeProgress(stored[username].progress)
+      };
+    });
+    return stored;
+  })()
 };
 
 const dm1Data = () => appState.currentUser?.progress.doge1 || defaultProgress.doge1;
@@ -95,7 +125,10 @@ function closeApp() {
 
 function updateProgress() {
   if (!appState.currentUser) return;
-  appState.accounts[appState.currentUser.username].progress = appState.currentUser.progress;
+  const account = appState.accounts[appState.currentUser.username];
+  if (!account) return;
+  account.progress = normalizeProgress(appState.currentUser.progress);
+  appState.currentUser.progress = account.progress;
   saveAccounts();
 }
 
@@ -118,7 +151,9 @@ function renderDogeMiner2() {
 function renderDriveMad() {
   const stats = driveData();
   driveBestEl.textContent = Math.floor(stats.best);
-  driveScoreEl.textContent = Math.floor(stats.best);
+
+  const currentScore = driveState.started ? driveState.score : stats.best;
+  driveScoreEl.textContent = Math.floor(currentScore);
 }
 
 function renderAll() {
@@ -242,7 +277,7 @@ authForm.addEventListener('submit', (event) => {
 
   appState.currentUser = {
     username,
-    progress: account.progress || JSON.parse(JSON.stringify(defaultProgress))
+    progress: normalizeProgress(account.progress)
   };
 
   account.progress = appState.currentUser.progress;
@@ -412,7 +447,6 @@ function drawDriveScene() {
   driveCtx.fillStyle = '#5a8d47';
   driveCtx.fillRect(0, driveCanvas.height - 50, driveCanvas.width, 15);
 
-  // road stripes
   for (let i = 0; i < 10; i += 1) {
     const x = (i * 120) - (driveState.score * 2 % 120);
     driveCtx.fillStyle = '#e5f7ff';
@@ -459,6 +493,7 @@ function driveLoop() {
 function startDriveGame() {
   if (!appState.currentUser) return;
   resetDriveState();
+  driveScoreEl.textContent = '0';
   startDriveBtn.textContent = 'Restart Run';
   if (!driveAnimationId) {
     driveLoop();
@@ -490,7 +525,7 @@ function ensureCurrentUserProgress() {
   if (!appState.currentUser) return;
   const account = appState.accounts[appState.currentUser.username];
   if (!account) return;
-  appState.currentUser.progress = account.progress || JSON.parse(JSON.stringify(defaultProgress));
+  appState.currentUser.progress = normalizeProgress(account.progress);
   account.progress = appState.currentUser.progress;
 }
 
@@ -499,6 +534,7 @@ window.addEventListener('load', () => {
     if (!appState.accounts[username].progress) {
       appState.accounts[username].progress = JSON.parse(JSON.stringify(defaultProgress));
     }
+    appState.accounts[username].progress = normalizeProgress(appState.accounts[username].progress);
   });
   saveAccounts();
   drawDriveScene();
