@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Game Hub</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="authScreen" class="screen active">
+      <div class="auth-panel">
+        <div class="brand-block">
+          <div class="brand-badge">G</div>
+          <h1>Game Hub</h1>
+        </div>
+
+        <div class="auth-switch">
+          <button class="mode-btn active" data-mode="login">Login</button>
+          <button class="mode-btn" data-mode="signup">Create Account</button>
+        </div>
+
+        <form id="authForm">
+          <label>
+            Username
+            <input id="usernameInput" type="text" maxlength="18" required />
+          </label>
+          <label>
+            Password
+            <input id="passwordInput" type="password" maxlength="18" required />
+          </label>
+          <button id="submitAuthBtn" type="submit">Log In</button>
+        </form>
+
+        <p id="authMessage" class="auth-message"></p>
+      </div>
+    </div>
+
+    <div id="app" class="app hidden">
+      <header id="appHeader" class="topbar">
+        <div class="brand-wrap">
+          <span class="brand-dot"></span>
+          <span class="brand-text">Game Hub</span>
+        </div>
+
+        <div class="toolbar">
+          <span id="welcomeUser">Guest</span>
+          <button id="fullscreenBtn" class="small-btn">Fullscreen</button>
+          <button id="logoutBtn" class="small-btn alt">Logout</button>
+        </div>
+      </header>
+
+      <nav class="game-nav" aria-label="Games">
+        <button class="game-btn active" data-game="doge1">Doge Miner 1</button>
+        <button class="game-btn" data-game="doge2">Doge Miner 2</button>
+        <button class="game-btn" data-game="drive">Drive Mad</button>
+      </nav>
+
+      <main class="content">
+        <section id="doge1Panel" class="game-panel active">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Idle Clicker</p>
+              <h2>Doge Miner 1</h2>
+            </div>
+            <button id="mineBtn1" class="action-btn">Mine</button>
+          </div>
+
+          <div class="stats-grid">
+            <div class="stat-card">
+              <span>Coins</span>
+              <strong id="dm1Coins">0</strong>
+            </div>
+            <div class="stat-card">
+              <span>Auto Miners</span>
+              <strong id="dm1Miners">0</strong>
+            </div>
+            <div class="stat-card">
+              <span>Click Power</span>
+              <strong id="dm1Power">1</strong>
+            </div>
+          </div>
+
+          <div class="upgrade-row">
+            <button class="upgrade-btn" data-upgrade="dm1Auto">Upgrade Auto Miner</button>
+            <button class="upgrade-btn" data-upgrade="dm1Power">Boost Click Power</button>
+          </div>
+
+          <div id="dm1Log" class="status-log"></div>
+        </section>
+
+        <section id="doge2Panel" class="game-panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Deep Mine</p>
+              <h2>Doge Miner 2</h2>
+            </div>
+            <button id="mineBtn2" class="action-btn">Dig</button>
+          </div>
+
+          <div class="stats-grid">
+            <div class="stat-card">
+              <span>Gems</span>
+              <strong id="dm2Gems">0</strong>
+            </div>
+            <div class="stat-card">
+              <span>Drills</span>
+              <strong id="dm2Drills">0</strong>
+            </div>
+            <div class="stat-card">
+              <span>Dig Power</span>
+              <strong id="dm2Power">1</strong>
+            </div>
+          </div>
+
+          <div class="upgrade-row">
+            <button class="upgrade-btn" data-upgrade="dm2Drill">Upgrade Drill</button>
+            <button class="upgrade-btn" data-upgrade="dm2Power">Upgrade Dig Power</button>
+          </div>
+
+          <div id="dm2Log" class="status-log"></div>
+        </section>
+
+        <section id="drivePanel" class="game-panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Racing</p>
+              <h2>Drive Mad</h2>
+            </div>
+            <button id="startDriveBtn" class="action-btn">Start Run</button>
+          </div>
+
+          <div class="stats-grid narrow">
+            <div class="stat-card">
+              <span>Score</span>
+              <strong id="driveScore">0</strong>
+            </div>
+            <div class="stat-card">
+              <span>Best</span>
+              <strong id="driveBest">0</strong>
+            </div>
+          </div>
+
+          <canvas id="driveCanvas" width="840" height="420"></canvas>
+        </section>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
