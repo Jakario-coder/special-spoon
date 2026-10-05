@@ -1,353 +1,601 @@
-:root {
-  --bg: #0d1220;
-  --bg-soft: #171f34;
-  --panel: rgba(20, 31, 50, 0.95);
-  --panel-alt: rgba(27, 41, 64, 0.9);
-  --border: rgba(255, 255, 255, 0.08);
-  --text: #edf3ff;
-  --muted: #9bacd6;
-  --primary: #59d0ff;
-  --secondary: #7effa8;
-  --gold: #ffd166;
-  --danger: #ff6b6b;
-  --shadow: rgba(4, 10, 20, 0.45);
+const STORAGE_KEY = 'gameHubAccounts';
+
+const defaultProgress = {
+  doge1: { coins: 0, autoMiners: 0, clickPower: 1 },
+  doge2: { gems: 0, drills: 0, digPower: 1 },
+  drive: { best: 0 }
+};
+
+const defaultUserProgress = () => JSON.parse(JSON.stringify(defaultProgress));
+
+function normalizeProgress(progress) {
+  const base = defaultUserProgress();
+  const safe = progress && typeof progress === 'object' ? progress : {};
+
+  return {
+    doge1: {
+      ...base.doge1,
+      ...(safe.doge1 || {})
+    },
+    doge2: {
+      ...base.doge2,
+      ...(safe.doge2 || {})
+    },
+    drive: {
+      ...base.drive,
+      ...(safe.drive || {})
+    }
+  };
 }
 
-* {
-  box-sizing: border-box;
-}
+function loadAccounts() {
+  let parsed = {};
 
-html, body {
-  margin: 0;
-  min-height: 100%;
-  background: radial-gradient(circle at top, #172544 0%, var(--bg) 48%, #050a13 100%);
-  color: var(--text);
-  font-family: Arial, Helvetica, sans-serif;
-}
-
-body {
-  min-height: 100vh;
-}
-
-button,
-input {
-  font: inherit;
-}
-
-button {
-  cursor: pointer;
-}
-
-.hidden {
-  display: none !important;
-}
-
-.screen {
-  min-height: 100vh;
-  display: grid;
-  place-items: center;
-  padding: 24px;
-}
-
-.auth-panel {
-  width: min(100%, 460px);
-  background: rgba(18, 25, 38, 0.9);
-  border: 1px solid var(--border);
-  box-shadow: 0 24px 60px var(--shadow);
-  border-radius: 24px;
-  padding: 28px;
-}
-
-.brand-block {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 20px;
-}
-
-.brand-badge {
-  width: 52px;
-  height: 52px;
-  display: grid;
-  place-items: center;
-  border-radius: 16px;
-  background: linear-gradient(135deg, var(--primary), var(--secondary));
-  color: #04111b;
-  font-weight: 800;
-  font-size: 1.5rem;
-}
-
-h1, h2, p {
-  margin: 0;
-}
-
-.auth-switch {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-.mode-btn,
-.game-btn,
-.small-btn,
-.upgrade-btn,
-.action-btn {
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.03);
-  color: var(--text);
-  transition: 0.2s ease;
-}
-
-.mode-btn {
-  padding: 12px 16px;
-}
-
-.mode-btn.active,
-.game-btn.active {
-  background: linear-gradient(135deg, rgba(89, 208, 255, 0.25), rgba(126, 255, 168, 0.18));
-  border-color: rgba(89, 208, 255, 0.55);
-}
-
-#authForm {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-label {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  color: var(--muted);
-  font-size: 0.95rem;
-}
-
-input {
-  border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.02);
-  color: var(--text);
-  padding: 12px 14px;
-  border-radius: 12px;
-  outline: none;
-}
-
-input:focus {
-  border-color: rgba(89, 208, 255, 0.6);
-  box-shadow: 0 0 0 4px rgba(89, 208, 255, 0.12);
-}
-
-#submitAuthBtn,
-.action-btn {
-  background: linear-gradient(135deg, var(--primary), #75b7ff);
-  color: #04111b;
-  font-weight: 700;
-  padding: 12px 18px;
-  border: none;
-  border-radius: 12px;
-}
-
-#authForm button:hover,
-.mode-btn:hover,
-.game-btn:hover,
-.small-btn:hover,
-.upgrade-btn:hover,
-.action-btn:hover {
-  transform: translateY(-1px);
-  filter: brightness(1.04);
-}
-
-.auth-message {
-  min-height: 20px;
-  margin-top: 16px;
-  color: var(--gold);
-}
-
-.app {
-  min-height: 100vh;
-  padding: 24px;
-}
-
-.topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 18px;
-  background: rgba(16, 23, 36, 0.88);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  padding: 16px 20px;
-  box-shadow: 0 20px 34px rgba(0, 0, 0, 0.18);
-}
-
-.brand-wrap {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  font-weight: 700;
-}
-
-.brand-dot {
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: var(--secondary);
-  box-shadow: 0 0 16px rgba(126, 255, 168, 0.8);
-}
-
-.toolbar {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-#welcomeUser {
-  color: var(--muted);
-  font-size: 0.95rem;
-}
-
-.small-btn,
-.upgrade-btn {
-  padding: 10px 14px;
-}
-
-.small-btn.alt {
-  background: rgba(255, 255, 255, 0.02);
-}
-
-.game-nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 22px;
-}
-
-.game-btn {
-  padding: 12px 18px;
-  min-width: 160px;
-}
-
-.content {
-  margin-top: 22px;
-}
-
-.game-panel {
-  display: none;
-  background: rgba(16, 23, 36, 0.82);
-  border: 1px solid var(--border);
-  border-radius: 24px;
-  padding: 22px;
-  box-shadow: 0 18px 32px rgba(0, 0, 0, 0.16);
-}
-
-.game-panel.active {
-  display: block;
-}
-
-.panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 18px;
-}
-
-.eyebrow {
-  font-size: 0.72rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--muted);
-  margin-bottom: 6px;
-}
-
-h2 {
-  font-size: clamp(1.5rem, 2vw, 2.2rem);
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
-  margin-bottom: 18px;
-}
-
-.stats-grid.narrow {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  max-width: 420px;
-}
-
-.stat-card {
-  background: var(--panel-alt);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 16px;
-}
-
-.stat-card span {
-  display: block;
-  color: var(--muted);
-  margin-bottom: 10px;
-}
-
-.stat-card strong {
-  font-size: clamp(1.2rem, 2vw, 1.8rem);
-}
-
-.upgrade-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 18px;
-}
-
-.status-log {
-  min-height: 120px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 14px 16px;
-  color: var(--muted);
-  line-height: 1.8;
-}
-
-canvas {
-  width: 100%;
-  max-width: 100%;
-  background: linear-gradient(180deg, #aee7ff 0%, #dff7ff 45%, #7cc36a 46%, #5a8d47 100%);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  display: block;
-}
-
-body.fullscreen-mode #appHeader {
-  opacity: 0;
-  pointer-events: none;
-}
-
-body.fullscreen-mode .game-nav {
-  margin-top: 0;
-}
-
-@media (max-width: 720px) {
-  .app {
-    padding: 16px;
+  try {
+    parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+  } catch (error) {
+    parsed = {};
   }
 
-  .topbar,
-  .panel-header {
-    flex-direction: column;
-    align-items: flex-start;
+  if (!parsed || typeof parsed !== 'object') {
+    return {};
   }
 
-  .toolbar {
-    width: 100%;
-    justify-content: space-between;
-    flex-wrap: wrap;
+  Object.keys(parsed).forEach((username) => {
+    const account = parsed[username];
+    if (account && typeof account === 'object') {
+      account.progress = normalizeProgress(account.progress);
+    }
+  });
+
+  return parsed;
+}
+
+const appState = {
+  activeGame: 'doge1',
+  currentUser: null,
+  accounts: loadAccounts(),
+  timers: {
+    dm1: null,
+    dm2: null
+  }
+};
+
+const dm1Data = () => appState.currentUser?.progress.doge1 || defaultProgress.doge1;
+const dm2Data = () => appState.currentUser?.progress.doge2 || defaultProgress.doge2;
+const driveData = () => appState.currentUser?.progress.drive || defaultProgress.drive;
+
+const authScreen = document.getElementById('authScreen');
+const appScreen = document.getElementById('app');
+const authForm = document.getElementById('authForm');
+const authMessage = document.getElementById('authMessage');
+const authModeButtons = [...document.querySelectorAll('.mode-btn')];
+const submitAuthBtn = document.getElementById('submitAuthBtn');
+const usernameInput = document.getElementById('usernameInput');
+const passwordInput = document.getElementById('passwordInput');
+const welcomeUser = document.getElementById('welcomeUser');
+
+const gameButtons = [...document.querySelectorAll('.game-btn')];
+const gamePanels = {
+  doge1: document.getElementById('doge1Panel'),
+  doge2: document.getElementById('doge2Panel'),
+  drive: document.getElementById('drivePanel')
+};
+
+const mineBtn1 = document.getElementById('mineBtn1');
+const mineBtn2 = document.getElementById('mineBtn2');
+const fullscreenBtn = document.getElementById('fullscreenBtn');
+const logoutBtn = document.getElementById('logoutBtn');
+const startDriveBtn = document.getElementById('startDriveBtn');
+
+const dm1CoinsEl = document.getElementById('dm1Coins');
+const dm1MinersEl = document.getElementById('dm1Miners');
+const dm1PowerEl = document.getElementById('dm1Power');
+const dm1LogEl = document.getElementById('dm1Log');
+
+const dm2GemsEl = document.getElementById('dm2Gems');
+const dm2DrillsEl = document.getElementById('dm2Drills');
+const dm2PowerEl = document.getElementById('dm2Power');
+const dm2LogEl = document.getElementById('dm2Log');
+
+const driveScoreEl = document.getElementById('driveScore');
+const driveBestEl = document.getElementById('driveBest');
+const driveCanvas = document.getElementById('driveCanvas');
+const driveCtx = driveCanvas.getContext('2d');
+
+let authMode = 'login';
+
+function saveAccounts() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(appState.accounts));
+}
+
+function showAuthMessage(text, type = 'info') {
+  authMessage.textContent = text;
+  if (type === 'error') authMessage.style.color = '#ff9d9d';
+  else if (type === 'success') authMessage.style.color = '#7effa8';
+  else authMessage.style.color = '#ffd166';
+}
+
+function setAuthMode(mode) {
+  authMode = mode;
+  authModeButtons.forEach((button) => {
+    button.classList.toggle('active', button.dataset.mode === mode);
+  });
+  submitAuthBtn.textContent = mode === 'login' ? 'Log In' : 'Create Account';
+}
+
+function getCurrentAccount() {
+  if (!appState.currentUser) return null;
+  return appState.accounts[appState.currentUser.username] || null;
+}
+
+function ensureCurrentUserProgress() {
+  if (!appState.currentUser) return;
+  const account = getCurrentAccount();
+  if (!account) return;
+  appState.currentUser.progress = normalizeProgress(account.progress);
+  account.progress = appState.currentUser.progress;
+}
+
+function updateProgress() {
+  const account = getCurrentAccount();
+  if (!account || !appState.currentUser) return;
+  appState.currentUser.progress = normalizeProgress(appState.currentUser.progress);
+  account.progress = appState.currentUser.progress;
+  saveAccounts();
+}
+
+function startMiningIntervals() {
+  if (appState.timers.dm1) return;
+  appState.timers.dm1 = setInterval(() => {
+    if (!appState.currentUser) return;
+    const minerStats = dm1Data();
+    minerStats.coins += minerStats.autoMiners;
+    updateProgress();
+    renderDogeMiner1();
+  }, 1200);
+
+  if (appState.timers.dm2) return;
+  appState.timers.dm2 = setInterval(() => {
+    if (!appState.currentUser) return;
+    const minerStats = dm2Data();
+    minerStats.gems += minerStats.drills;
+    updateProgress();
+    renderDogeMiner2();
+  }, 1300);
+}
+
+function stopMiningIntervals() {
+  if (appState.timers.dm1) {
+    clearInterval(appState.timers.dm1);
+    appState.timers.dm1 = null;
   }
 
-  .stats-grid {
-    grid-template-columns: 1fr;
+  if (appState.timers.dm2) {
+    clearInterval(appState.timers.dm2);
+    appState.timers.dm2 = null;
   }
+}
+
+function openApp(user) {
+  appState.currentUser = user;
+  ensureCurrentUserProgress();
+  authScreen.classList.add('hidden');
+  appScreen.classList.remove('hidden');
+  welcomeUser.textContent = `Player: ${user.username}`;
+  startMiningIntervals();
+  renderAll();
+}
+
+function closeApp() {
+  ensureCurrentUserProgress();
+  appState.currentUser = null;
+  stopMiningIntervals();
+  appScreen.classList.add('hidden');
+  authScreen.classList.remove('hidden');
+  usernameInput.value = '';
+  passwordInput.value = '';
+  welcomeUser.textContent = 'Guest';
+}
+
+function renderDogeMiner1() {
+  const stats = dm1Data();
+  dm1CoinsEl.textContent = Math.floor(stats.coins);
+  dm1MinersEl.textContent = stats.autoMiners;
+  dm1PowerEl.textContent = stats.clickPower;
+  dm1LogEl.innerHTML = `Coins: ${Math.floor(stats.coins)}<br>Auto miners: ${stats.autoMiners}<br>Click power: ${stats.clickPower}`;
+}
+
+function renderDogeMiner2() {
+  const stats = dm2Data();
+  dm2GemsEl.textContent = Math.floor(stats.gems);
+  dm2DrillsEl.textContent = stats.drills;
+  dm2PowerEl.textContent = stats.digPower;
+  dm2LogEl.innerHTML = `Gems: ${Math.floor(stats.gems)}<br>Drills: ${stats.drills}<br>Dig power: ${stats.digPower}`;
+}
+
+function renderDriveMad() {
+  const stats = driveData();
+  driveBestEl.textContent = Math.floor(stats.best);
+  const currentScore = driveState.started ? driveState.score : stats.best;
+  driveScoreEl.textContent = Math.floor(currentScore);
+}
+
+function renderAll() {
+  renderDogeMiner1();
+  renderDogeMiner2();
+  renderDriveMad();
+  showGame(appState.activeGame);
+}
+
+function getCost(type) {
+  if (type === 'dm1Auto') return 25 + dm1Data().autoMiners * 18;
+  if (type === 'dm1Power') return 40 + dm1Data().clickPower * 22;
+  if (type === 'dm2Drill') return 30 + dm2Data().drills * 25;
+  if (type === 'dm2Power') return 50 + dm2Data().digPower * 28;
+  return 0;
+}
+
+function buyUpgrade(type) {
+  if (!appState.currentUser) return;
+
+  if (type === 'dm1Auto') {
+    const stats = dm1Data();
+    const cost = getCost(type);
+    if (stats.coins >= cost) {
+      stats.coins -= cost;
+      stats.autoMiners += 1;
+      updateProgress();
+      renderDogeMiner1();
+    }
+  }
+
+  if (type === 'dm1Power') {
+    const stats = dm1Data();
+    const cost = getCost(type);
+    if (stats.coins >= cost) {
+      stats.coins -= cost;
+      stats.clickPower += 1;
+      updateProgress();
+      renderDogeMiner1();
+    }
+  }
+
+  if (type === 'dm2Drill') {
+    const stats = dm2Data();
+    const cost = getCost(type);
+    if (stats.gems >= cost) {
+      stats.gems -= cost;
+      stats.drills += 1;
+      updateProgress();
+      renderDogeMiner2();
+    }
+  }
+
+  if (type === 'dm2Power') {
+    const stats = dm2Data();
+    const cost = getCost(type);
+    if (stats.gems >= cost) {
+      stats.gems -= cost;
+      stats.digPower += 1;
+      updateProgress();
+      renderDogeMiner2();
+    }
+  }
+}
+
+function showGame(gameName) {
+  appState.activeGame = gameName;
+
+  Object.entries(gamePanels).forEach(([name, panel]) => {
+    panel.classList.toggle('active', name === gameName);
+  });
+
+  gameButtons.forEach((button) => {
+    button.classList.toggle('active', button.dataset.game === gameName);
+  });
+}
+
+gameButtons.forEach((button) => {
+  button.addEventListener('click', () => showGame(button.dataset.game));
+});
+
+authModeButtons.forEach((button) => {
+  button.addEventListener('click', () => setAuthMode(button.dataset.mode));
+});
+
+authForm.addEventListener('submit', (event) => {
+  event.preventDefault();
+
+  const username = usernameInput.value.trim();
+  const password = passwordInput.value.trim();
+
+  if (!username || !password) {
+    showAuthMessage('Please fill in both fields.', 'error');
+    return;
+  }
+
+  if (authMode === 'signup') {
+    if (appState.accounts[username]) {
+      showAuthMessage('That username already exists. Use login instead.', 'error');
+      return;
+    }
+
+    appState.accounts[username] = {
+      password,
+      progress: defaultUserProgress()
+    };
+
+    saveAccounts();
+    showAuthMessage('Account created. You can now log in.', 'success');
+    setAuthMode('login');
+    usernameInput.value = '';
+    passwordInput.value = '';
+    return;
+  }
+
+  const account = appState.accounts[username];
+  if (!account || account.password !== password) {
+    showAuthMessage('Invalid username or password.', 'error');
+    return;
+  }
+
+  appState.currentUser = {
+    username,
+    progress: normalizeProgress(account.progress)
+  };
+
+  account.progress = appState.currentUser.progress;
+  saveAccounts();
+  openApp(appState.currentUser);
+});
+
+mineBtn1.addEventListener('click', () => {
+  if (!appState.currentUser) return;
+  const stats = dm1Data();
+  stats.coins += stats.clickPower;
+  updateProgress();
+  renderDogeMiner1();
+});
+
+mineBtn2.addEventListener('click', () => {
+  if (!appState.currentUser) return;
+  const stats = dm2Data();
+  stats.gems += stats.digPower;
+  updateProgress();
+  renderDogeMiner2();
+});
+
+document.querySelectorAll('.upgrade-btn').forEach((button) => {
+  button.addEventListener('click', () => buyUpgrade(button.dataset.upgrade));
+});
+
+logoutBtn.addEventListener('click', () => {
+  closeApp();
+  showAuthMessage('You have been logged out.', 'success');
+});
+
+fullscreenBtn.addEventListener('click', async () => {
+  if (!document.fullscreenElement) {
+    await document.documentElement.requestFullscreen().catch(() => {});
+  } else {
+    await document.exitFullscreen().catch(() => {});
+  }
+});
+
+document.addEventListener('fullscreenchange', () => {
+  document.body.classList.toggle('fullscreen-mode', !!document.fullscreenElement);
+});
+
+let driveAnimationId = null;
+const driveState = {
+  carX: 130,
+  carY: 310,
+  carWidth: 82,
+  carHeight: 44,
+  speed: 5,
+  jumpVel: 0,
+  gravity: 0.7,
+  obstacles: [],
+  frame: 0,
+  score: 0,
+  started: false,
+  gameOver: false
+};
+
+function resetDriveState() {
+  driveState.carX = 130;
+  driveState.carY = 310;
+  driveState.jumpVel = 0;
+  driveState.obstacles = [];
+  driveState.frame = 0;
+  driveState.score = 0;
+  driveState.started = true;
+  driveState.gameOver = false;
+}
+
+function spawnObstacle() {
+  const height = 36 + Math.random() * 110;
+  driveState.obstacles.push({
+    x: driveCanvas.width + 30,
+    y: driveCanvas.height - height - 40,
+    width: 30 + Math.random() * 36,
+    height,
+    color: Math.random() > 0.5 ? '#ff7d7d' : '#ffd166'
+  });
+}
+
+function handleDriveInput() {
+  if (!driveState.started || driveState.gameOver) return;
+  if (driveState.carY >= 310) {
+    driveState.jumpVel = -14;
+  }
+}
+
+document.addEventListener('keydown', (event) => {
+  if (event.code === 'Space' || event.code === 'ArrowUp') {
+    handleDriveInput();
+  }
+});
+
+driveCanvas.addEventListener('pointerdown', () => {
+  handleDriveInput();
+});
+
+function updateDriveGame() {
+  if (!driveState.started || driveState.gameOver) return;
+
+  driveState.frame += 1;
+  if (driveState.frame % 55 === 0) {
+    spawnObstacle();
+  }
+
+  driveState.carY += driveState.jumpVel;
+  driveState.jumpVel += driveState.gravity;
+
+  if (driveState.carY > 310) {
+    driveState.carY = 310;
+    driveState.jumpVel = 0;
+  }
+
+  driveState.obstacles.forEach((obstacle) => {
+    obstacle.x -= driveState.speed;
+  });
+
+  driveState.obstacles = driveState.obstacles.filter((obstacle) => obstacle.x + obstacle.width > 0);
+  driveState.score += 1;
+
+  const carRect = {
+    x: driveState.carX,
+    y: driveState.carY,
+    width: driveState.carWidth,
+    height: driveState.carHeight
+  };
+
+  for (const obstacle of driveState.obstacles) {
+    const obstacleRect = {
+      x: obstacle.x,
+      y: obstacle.y,
+      width: obstacle.width,
+      height: obstacle.height
+    };
+
+    const collision =
+      carRect.x < obstacleRect.x + obstacleRect.width &&
+      carRect.x + carRect.width > obstacleRect.x &&
+      carRect.y < obstacleRect.y + obstacleRect.height &&
+      carRect.y + carRect.height > obstacleRect.y;
+
+    if (collision) {
+      driveState.gameOver = true;
+      const best = driveData().best;
+      if (driveState.score > best) {
+        driveData().best = driveState.score;
+        updateProgress();
+      }
+      renderDriveMad();
+      break;
+    }
+  }
+
+  driveScoreEl.textContent = Math.floor(driveState.score);
+}
+
+function drawDriveScene() {
+  driveCtx.clearRect(0, 0, driveCanvas.width, driveCanvas.height);
+
+  driveCtx.fillStyle = '#dff7ff';
+  driveCtx.fillRect(0, 0, driveCanvas.width, driveCanvas.height);
+
+  driveCtx.fillStyle = '#87c66a';
+  driveCtx.fillRect(0, driveCanvas.height - 35, driveCanvas.width, 35);
+
+  driveCtx.fillStyle = '#5a8d47';
+  driveCtx.fillRect(0, driveCanvas.height - 50, driveCanvas.width, 15);
+
+  for (let i = 0; i < 10; i += 1) {
+    const x = (i * 120) - (driveState.score * 2 % 120);
+    driveCtx.fillStyle = '#e5f7ff';
+    driveCtx.fillRect(x, driveCanvas.height - 130, 60, 12);
+  }
+
+  driveCtx.fillStyle = '#1b2756';
+  driveCtx.fillRect(driveState.carX, driveState.carY, driveState.carWidth, driveState.carHeight);
+  driveCtx.fillStyle = '#59d0ff';
+  driveCtx.fillRect(driveState.carX + 12, driveState.carY + 8, 20, 14);
+  driveCtx.fillRect(driveState.carX + 48, driveState.carY + 8, 20, 14);
+
+  driveState.obstacles.forEach((obstacle) => {
+    driveCtx.fillStyle = obstacle.color;
+    driveCtx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+  });
+
+  if (!driveState.started) {
+    driveCtx.fillStyle = 'rgba(7, 15, 28, 0.55)';
+    driveCtx.fillRect(0, 0, driveCanvas.width, driveCanvas.height);
+    driveCtx.fillStyle = '#fff';
+    driveCtx.font = 'bold 32px Arial';
+    driveCtx.fillText('Press Start Run', 250, 210);
+  }
+
+  if (driveState.gameOver) {
+    driveCtx.fillStyle = 'rgba(7, 15, 28, 0.6)';
+    driveCtx.fillRect(0, 0, driveCanvas.width, driveCanvas.height);
+    driveCtx.fillStyle = '#fff';
+    driveCtx.font = 'bold 34px Arial';
+    driveCtx.fillText('Crash!', 340, 190);
+    driveCtx.font = '24px Arial';
+    driveCtx.fillText(`Score: ${Math.floor(driveState.score)}`, 320, 232);
+    driveCtx.fillText('Press Start Run to retry', 240, 270);
+  }
+}
+
+function driveLoop() {
+  updateDriveGame();
+  drawDriveScene();
+  driveAnimationId = requestAnimationFrame(driveLoop);
+}
+
+function startDriveGame() {
+  if (!appState.currentUser) return;
+  resetDriveState();
+  driveScoreEl.textContent = '0';
+  startDriveBtn.textContent = 'Restart Run';
+  if (!driveAnimationId) {
+    driveLoop();
+  }
+}
+
+function stopDriveLoop() {
+  if (driveAnimationId) {
+    cancelAnimationFrame(driveAnimationId);
+    driveAnimationId = null;
+  }
+}
+
+startDriveBtn.addEventListener('click', startDriveGame);
+
+setAuthMode('login');
+showAuthMessage('Create an account or sign in to save your game progress.');
+
+window.addEventListener('load', () => {
+  Object.keys(appState.accounts).forEach((username) => {
+    const account = appState.accounts[username];
+    if (!account || typeof account !== 'object') return;
+    account.progress = normalizeProgress(account.progress);
+  });
+  saveAccounts();
+  drawDriveScene();
+});
+
+window.addEventListener('beforeunload', () => {
+  ensureCurrentUserProgress();
+  saveAccounts();
+  stopDriveLoop();
+});
+
+showGame('doge1');
+
+if (appState.currentUser) {
+  openApp(appState.currentUser);
 }
